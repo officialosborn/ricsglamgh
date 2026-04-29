@@ -1,6 +1,6 @@
 -- ═══════════════════════════════════════════════════════════
 -- RIC'S GLAM — SUPABASE DATABASE SETUP
--- Project: https://xryizxjtyvehkrapjwww.supabase.co
+-- Project: https://nrltliemkvcckhrmbodn.supabase.co
 -- Run this entire file in the Supabase SQL Editor
 -- ═══════════════════════════════════════════════════════════
 
