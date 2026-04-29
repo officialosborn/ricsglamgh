@@ -1,14 +1,14 @@
 /* ═══════════════════════════════════════════
    SUPABASE — backend auth & data
-   URL:  https://xryizxjtyvehkrapjwww.supabase.co
+   URL:  https://nrltliemkvcckhrmbodn.supabase.co
 ═══════════════════════════════════════════ */
 v
 /* ═══════════════════════════════════════════
    SUPABASE — backend auth & data
-   URL:  https://xryizxjtyvehkrapjwww.supabase.co
+   URL:  https://nrltliemkvcckhrmbodn.supabase.co
 ═══════════════════════════════════════════ */
-var SUPA_URL='https://xryizxjtyvehkrapjwww.supabase.co';
-var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeWl6eGp0eXZlaGtyYXBqd3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMTc1NTIsImV4cCI6MjA5MjU5MzU1Mn0.iInB0ELVOoDRZz_V9qMssWxI9Kt1vJ5Q-djBjAoxNig';
+var SUPA_URL='https://nrltliemkvcckhrmbodn.supabase.co';
+var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ybHRsaWVta3ZjY2tocm1ib2RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTcyMTIsImV4cCI6MjA5MzAzMzIxMn0.17Lqrq-1s-6AaQKAIQqYJHN88wRPXqBPCmcc0TGwmoE';
 var _sb=null;
 
 function initSupa(cb){
