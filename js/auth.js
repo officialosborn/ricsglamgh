@@ -232,33 +232,46 @@ function doLogin(){
   var err=document.getElementById('loginErr');
   err.style.display='none';
   if(!em||!pw){showErr(err,'Please enter email and password.');return;}
-  // Admin check (bypass Supabase)
+
+  /* ── STEP 1: Hardcoded admin intercept ──────────────────
+     Recognises ritchinduka@gmail.com / Ndukaglam2018@
+     Bypasses Supabase Auth completely — never creates a
+     customer profile. Sets isAdmin = true immediately.     */
   if(checkAdminCreds(em,pw)){
     var u={name:'Admin',email:em,role:'admin'};
-    setSession(u);sessionStorage.setItem('rg2_admin','1');
-    currentUser=u;isAdmin=true;
-    closeModal('authOverlay');enterAdminMode();return;
+    setSession(u);
+    sessionStorage.setItem('rg2_admin','1');
+    currentUser=u;
+    isAdmin=true;
+    closeModal('authOverlay');
+    enterAdminMode();
+    showToast('\u{1F6E1} Admin mode activated!','success');
+    return;
   }
-  // Try Supabase auth first, fall back to localStorage
+
+  /* ── STEP 2: Regular customer login via Supabase Auth ── */
   var btn=document.querySelector('#loginSection .auth-btn');
-  if(btn){btn.textContent='Logging in...';btn.disabled=true;}
+  if(btn){btn.textContent='Logging in\u2026';btn.disabled=true;}
   function restoreBtn(){if(btn){btn.textContent='Log In';btn.disabled=false;}}
+
   if(_sb){
     _sb.auth.signInWithPassword({email:em,password:pw}).then(function(res){
       restoreBtn();
       if(res.error){
-        // Fall back to localStorage
+        /* Supabase failed — try localStorage fallback */
         localLogin(em,pw,err);
-      } else {
+      }else{
         var ud=res.data.user;
         var name=(ud.user_metadata&&ud.user_metadata.name)||em.split('@')[0];
         var su={name:name,email:em,role:'user',sbId:ud.id};
-        setSession(su);currentUser=su;
-        closeModal('authOverlay');enterUserMode();
-        showToast('Welcome back, '+name.split(' ')[0]+'! ??');
+        setSession(su);
+        currentUser=su;
+        closeModal('authOverlay');
+        enterUserMode();
+        showToast('\u{1F497} Welcome back, '+name.split(' ')[0]+'!','success');
       }
     });
-  } else {
+  }else{
     restoreBtn();
     localLogin(em,pw,err);
   }

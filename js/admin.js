@@ -137,16 +137,54 @@ function openProdForm(id){
   openModal('prodFormOverlay');
 }
 function trigPSlot(i){var s=document.getElementById('pSlot'+i);if(!s.classList.contains('has'))document.getElementById('pFile'+i).click();}
-function handlePSlot(i){
-  var file=document.getElementById('pFile'+i).files[0];if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    pendingPImgs[i]=e.target.result;
-    var prev=document.getElementById('pPrev'+i);
-    var slot=document.getElementById('pSlot'+i);
-    prev.src=e.target.result;slot.classList.add('has');
-  };
-  reader.readAsDataURL(file);markEditing();
+async function handlePSlot(i){
+  var file=document.getElementById('pFile'+i).files[0];
+  if(!file)return;
+
+  /* ── FIX 4: Upload to Supabase Storage (product-images) ──
+     Replaces base64 logic. Resulting public URL is stored
+     in the images array — no long base64 strings in the DB. */
+  if(_sb){
+    var ext=file.name.split('.').pop()||'jpg';
+    var path='products/'+Date.now()+'_'+i+'.'+ext;
+    showToast('\u23f3 Uploading image\u2026','info');
+    var {data:upData,error:upErr}=await _sb.storage
+      .from('product-images')
+      .upload(path,file,{cacheControl:'3600',upsert:false});
+    if(upErr){
+      console.warn('[RicsGlam] Storage upload error:',upErr.message);
+      showToast('\u26a0 Upload failed: '+upErr.message,'error');
+      /* Fallback: use base64 so admin is not blocked */
+      var reader=new FileReader();
+      reader.onload=function(e){
+        pendingPImgs[i]=e.target.result;
+        document.getElementById('pPrev'+i).src=e.target.result;
+        document.getElementById('pSlot'+i).classList.add('has');
+        showToast('\u26a0 Saved as base64 fallback','warning');
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+    /* Get public URL from bucket */
+    var {data:urlData}=_sb.storage
+      .from('product-images')
+      .getPublicUrl(path);
+    var publicUrl=urlData&&urlData.publicUrl?urlData.publicUrl:'';
+    pendingPImgs[i]=publicUrl;
+    document.getElementById('pPrev'+i).src=publicUrl;
+    document.getElementById('pSlot'+i).classList.add('has');
+    showToast('\u2705 Image uploaded!','success');
+  }else{
+    /* Supabase not ready — fall back to base64 */
+    var reader=new FileReader();
+    reader.onload=function(e){
+      pendingPImgs[i]=e.target.result;
+      document.getElementById('pPrev'+i).src=e.target.result;
+      document.getElementById('pSlot'+i).classList.add('has');
+    };
+    reader.readAsDataURL(file);
+  }
+  markEditing();
 }
 function saveProd(){
   var name=document.getElementById('pName').value.trim();
@@ -156,44 +194,60 @@ function saveProd(){
   var inchMin=parseInt(document.getElementById('pInchMin').value)||null;
   var inchMax=parseInt(document.getElementById('pInchMax').value)||null;
   var badge=document.getElementById('pBadge').value.trim();
-  // Always treat editProdId as a STRING for consistent comparison with Supabase IDs
-  var eid=document.getElementById('editProdId').value.trim()||null;
-  if(!name||!desc||isNaN(price)||price<=0){showToast('⚠️ Fill in all required fields.');return;}
-  var imgs=pendingPImgs.filter(Boolean);
+  /* Always treat editProdId as STRING — matches Supabase text IDs */
+  var eid=(document.getElementById('editProdId').value||'').trim()||null;
+
+  if(!name||!desc||isNaN(price)||price<=0){
+    showToast('\u26a0 Fill in all required fields.','warning');
+    return;
+  }
+
+  var imgs=pendingPImgs.filter(Boolean); /* Storage URLs or base64 */
+
   if(eid){
-    // EDIT — find by string ID and UPDATE in place (never create a duplicate)
+    /* ── FIX 3: EDIT — findIndex to update in place, NEVER push() ──
+       Checks the full products array by string ID.
+       If found  → mutate that slot only.
+       If not found → add as new (failsafe, should not happen normally). */
     var idx=products.findIndex(function(p){return String(p.id)===String(eid);});
     if(idx>-1){
-      var existingIcon=products[idx].icon||'✨';
-      var finalImgs=imgs.length?imgs:(products[idx].imgs||[]);
       products[idx]={
-        id:String(eid),cat:cat,name:name,desc:desc,price:price,
-        badge:badge,icon:existingIcon,imgs:finalImgs,
+        id:String(eid),
+        cat:cat,name:name,desc:desc,price:price,badge:badge,
+        icon:products[idx].icon||'\u2728',
+        imgs:imgs.length?imgs:(products[idx].imgs||[]),
         inchMin:inchMin,inchMax:inchMax
       };
-      showToast('✅ Product updated!');
+      showToast('\u2705 Product updated!','success');
     }else{
-      // eid set but not found — treat as new to avoid silent failure
-      var fallbackId='p'+Date.now();
-      products.push({id:fallbackId,cat:cat,name:name,desc:desc,price:price,
-                     badge:badge,icon:'✨',imgs:imgs,inchMin:inchMin,inchMax:inchMax});
-      showToast('✅ Product added!');
+      /* eid provided but not found — treat as new, no duplicate */
+      var safeFallback='p'+Date.now();
+      products.push({
+        id:safeFallback,cat:cat,name:name,desc:desc,price:price,
+        badge:badge,icon:'\u2728',imgs:imgs,inchMin:inchMin,inchMax:inchMax
+      });
+      showToast('\u2705 Product added!','success');
     }
   }else{
-    // NEW product — unique timestamp-based string ID
+    /* ── NEW product — collision-safe unique ID ── */
     var newId='p'+Date.now();
-    // Guard: if somehow ID already exists, generate a new one
     while(products.findIndex(function(p){return p.id===newId;})>-1){
-      newId='p'+Date.now()+Math.floor(Math.random()*1000);
+      newId='p'+Date.now()+Math.floor(Math.random()*9999);
     }
-    products.push({id:newId,cat:cat,name:name,desc:desc,price:price,badge:badge,
-                   icon:'✨',imgs:imgs,inchMin:inchMin,inchMax:inchMax});
-    showToast('✅ Product added!');
+    products.push({
+      id:newId,cat:cat,name:name,desc:desc,price:price,
+      badge:badge,icon:'\u2728',imgs:imgs,inchMin:inchMin,inchMax:inchMax
+    });
+    showToast('\u2705 Product added!','success');
   }
-  closeModal('prodFormOverlay');save();
-  // Immediately sync this single product to Supabase
+
+  closeModal('prodFormOverlay');
+  save();
+  /* Sync immediately so all visitors see the update */
   if(_sb){syncToSupa();}else{initSupa(function(){syncToSupa();});}
-  renderBestSellers();filterProds();renderAdmLists();
+  renderBestSellers();
+  filterProds();
+  renderAdmLists();
 }
 function deleteProd(){
   var eid=document.getElementById('editProdId').value;
