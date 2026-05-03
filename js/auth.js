@@ -62,49 +62,36 @@ async function logoutSupa(){
 
 /* Save site data to Supabase (admin only) */
 async function syncToSupa(){
-  if(!isAdmin){console.warn('[RicsGlam] syncToSupa blocked - not admin');return;}
-  if(!_sb){initSupa(function(){syncToSupa();});return;}
+  if(!isAdmin){
+    console.warn('[RicsGlam] syncToSupa blocked - not admin');
+    return;
+  }
+  if(!_sb){ initSupa(function(){ syncToSupa(); }); return; }
   try{
-    showToast('⏳ Saving to database...');
-    var prods=products.map(function(p){
-      return{id:String(p.id),name:p.name,category:p.cat,description:p.desc,
-             price:p.price,badge:p.badge||'',icon:p.icon||'',
-             images:p.imgs||[],inch_min:p.inchMin||null,inch_max:p.inchMax||null};
+    showToast('\u23f3 Saving...', 'info');
+    /* ── Categories (photos) ── */
+    var cats = categories.map(function(c){
+      return {id:c.id, cat_key:c.key, label:c.label, emoji:c.emoji, image:c.img||null};
     });
-    var r1=await _sb.from('products').upsert(prods,{onConflict:'id'});
-    if(r1.error)console.warn('products:',r1.error.message);
-
-    var svcs=services.map(function(s){
-      return{id:s.id,name:s.name,description:s.desc,icon:s.icon||'',images:s.imgs||[]};
-    });
-    var r2=await _sb.from('services').upsert(svcs,{onConflict:'id'});
-    if(r2.error)console.warn('services:',r2.error.message);
-
-    var revs=testimonials.map(function(t){
-      return{id:t.id,name:t.name,location:t.loc||'',avatar:t.av||'',
-             stars:t.stars,title:t.title||'',review_text:t.txt,review_date:t.date||''};
-    });
-    var r3=await _sb.from('testimonials').upsert(revs,{onConflict:'id'});
-    if(r3.error)console.warn('testimonials:',r3.error.message);
-
-    var cats=categories.map(function(c){
-      return{id:c.id,cat_key:c.key,label:c.label,emoji:c.emoji,image:c.img||null};
-    });
-    var r4=await _sb.from('categories').upsert(cats,{onConflict:'id'});
-    if(r4.error)console.warn('categories:',r4.error.message);
-
-    var settings=[
-      {key:'heroData',value:JSON.stringify(heroData)},
-      {key:'socialLinks',value:JSON.stringify(socialLinks)}
+    var {error:ce} = await _sb.from('categories').upsert(cats,{onConflict:'id'});
+    if(ce) console.warn('[RicsGlam] categories sync:', ce.message);
+    /* ── Site settings (hero + social) ── */
+    var settings = [
+      {key:'heroData',    value:JSON.stringify(heroData)},
+      {key:'socialLinks', value:JSON.stringify(socialLinks)}
     ];
-    var r5=await _sb.from('site_settings').upsert(settings,{onConflict:'key'});
-    if(r5.error)console.warn('settings:',r5.error.message);
-
-    console.log('[RicsGlam] ✅ All data synced to Supabase');
-    showToast('✅ Saved! Changes are now live for everyone.');
-  }catch(e){
-    console.error('[RicsGlam] Sync error:',e);
-    showToast('⚠️ Sync error — saved locally. Check console.');
+    var {error:se} = await _sb.from('site_settings').upsert(settings,{onConflict:'key'});
+    if(se) console.warn('[RicsGlam] settings sync:', se.message);
+    showToast('\u2705 Saved! Refreshing...', 'success');
+    /* Clear stale localStorage then reload so all visitors see changes */
+    ['rg2_products','rg2_services','rg2_testimonials',
+     'rg2_categories','rg2_hero','rg2_social'].forEach(function(k){
+      localStorage.removeItem(k);
+    });
+    setTimeout(function(){ window.location.reload(true); }, 1500);
+  } catch(e){
+    console.error('[RicsGlam] syncToSupa error:', e.message||e);
+    showToast('\u26a0 Sync failed: '+(e.message||e), 'error');
   }
 }
 
@@ -119,69 +106,108 @@ function loadFromSupaWithLoader(callback){
   });
 }
 
-async function loadFromSupa(){
-  if(!_sb)return;
+async function loadInitialData(){
+  if(!_sb){
+    console.warn('[RicsGlam] Supabase not ready — retrying in 1s');
+    setTimeout(loadInitialData, 1000);
+    return;
+  }
+  console.log('[RicsGlam] Fetching live data from Supabase...');
   try{
-    var {data:prods,error:pe}=await _sb.from('products').select('*').order('created_at',{ascending:true});
-    if(pe){console.warn('[RicsGlam] products error:',pe.message);}
-    else if(prods&&prods.length>0){
-      products=prods.map(function(p){
-        return{id:String(p.id),cat:p.category||'Frontal',name:p.name||'Unnamed',
-               desc:p.description||'',price:Number(p.price)||0,badge:p.badge||'',
-               icon:p.icon||'\u2728',imgs:Array.isArray(p.images)?p.images:[],
-               inchMin:p.inch_min||null,inchMax:p.inch_max||null};
-      });
-    }else{console.log('[RicsGlam] No products in DB - using defaults');}
-
-    var {data:svcs,error:se}=await _sb.from('services').select('*');
-    if(se){console.warn('[RicsGlam] services error:',se.message);}
-    else if(svcs&&svcs.length>0){
-      services=svcs.map(function(s){
-        return{id:s.id,name:s.name||'Unnamed',desc:s.description||'',
-               icon:s.icon||'\u2728',imgs:Array.isArray(s.images)?s.images:[]};
-      });
-    }else{console.log('[RicsGlam] No services in DB - using defaults');}
-
-    var {data:revs,error:re2}=await _sb.from('testimonials').select('*').order('created_at',{ascending:true});
-    if(re2){console.warn('[RicsGlam] testimonials error:',re2.message);}
-    else if(revs&&revs.length>0){
-      testimonials=revs.map(function(t){
-        return{id:t.id,name:t.name||'Anonymous',loc:t.location||'',
-               av:t.avatar||'\uD83D\uDC69\uD83C\uDFFE',stars:Number(t.stars)||5,
-               title:t.title||'',txt:t.review_text||'',date:t.review_date||''};
-      });
-    }else{console.log('[RicsGlam] No testimonials in DB - using defaults');}
-
-    var {data:cats,error:ce}=await _sb.from('categories').select('*');
-    if(!ce&&cats&&cats.length>0){
+    /* ── Products ── */
+    var {data:prods, error:pe} = await _sb
+      .from('products').select('*').order('created_at',{ascending:true});
+    if(pe) console.warn('[RicsGlam] products:', pe.message);
+    products = (prods||[]).map(function(p){
+      return {
+        id:      String(p.id),
+        cat:     p.category  || 'Frontal',
+        name:    p.name      || 'Unnamed',
+        desc:    p.description || '',
+        price:   Number(p.price) || 0,
+        badge:   p.badge     || '',
+        icon:    p.icon      || '\u2728',
+        imgs:    Array.isArray(p.images) ? p.images : [],
+        inchMin: p.inch_min  || null,
+        inchMax: p.inch_max  || null
+      };
+    });
+    /* ── Services ── */
+    var {data:svcs, error:se} = await _sb
+      .from('services').select('*').order('created_at',{ascending:true});
+    if(se) console.warn('[RicsGlam] services:', se.message);
+    services = (svcs||[]).map(function(s){
+      return {
+        id:   s.id,
+        name: s.name        || 'Unnamed',
+        desc: s.description || '',
+        icon: s.icon        || '\u2728',
+        imgs: Array.isArray(s.images) ? s.images : []
+      };
+    });
+    /* ── Testimonials ── */
+    var {data:revs, error:re} = await _sb
+      .from('testimonials').select('*').order('created_at',{ascending:true});
+    if(re) console.warn('[RicsGlam] testimonials:', re.message);
+    testimonials = (revs||[]).map(function(t){
+      return {
+        id:    t.id,
+        name:  t.name         || 'Anonymous',
+        loc:   t.location     || '',
+        av:    t.avatar       || '\uD83D\uDC69\uD83C\uDFFE',
+        stars: Number(t.stars)|| 5,
+        title: t.title        || '',
+        txt:   t.review_text  || '',
+        date:  t.review_date  || ''
+      };
+    });
+    /* ── Categories (photos only) ── */
+    var {data:cats, error:ce} = await _sb
+      .from('categories').select('*');
+    if(!ce && cats){
       cats.forEach(function(c){
-        if(!c||!c.id)return;
-        var local=categories.find(function(x){return x.id===c.id;});
-        if(local&&c.image)local.img=c.image;
+        if(!c||!c.id) return;
+        var local = categories.find(function(x){ return x.id===c.id; });
+        if(local && c.image) local.img = c.image;
       });
     }
-
-    var {data:settings,error:ste}=await _sb.from('site_settings').select('*');
-    if(!ste&&settings&&settings.length>0){
+    /* ── Site settings (hero, social links) ── */
+    var {data:settings, error:ste} = await _sb
+      .from('site_settings').select('*');
+    if(!ste && settings){
       settings.forEach(function(s){
-        if(!s||!s.key||!s.value)return;
+        if(!s||!s.key||!s.value) return;
         try{
-          if(s.key==='heroData'){var hd=JSON.parse(s.value);if(hd&&typeof hd==='object')heroData=hd;}
-          else if(s.key==='socialLinks'){var sl=JSON.parse(s.value);if(sl&&typeof sl==='object')socialLinks=sl;}
-        }catch(ex){console.warn('[RicsGlam] Setting parse error:',s.key);}
+          if(s.key==='heroData'){
+            var hd = JSON.parse(s.value);
+            if(hd && typeof hd==='object') heroData = hd;
+          } else if(s.key==='socialLinks'){
+            var sl = JSON.parse(s.value);
+            if(sl && typeof sl==='object') socialLinks = sl;
+          }
+        } catch(ex){
+          console.warn('[RicsGlam] settings parse error:', s.key);
+        }
       });
     }
-
+    /* ── Render everything with live data ── */
     renderAll();
     applyHeroOnLoad();
-    console.log('[RicsGlam] Loaded - products:'+products.length+' services:'+services.length+' reviews:'+testimonials.length);
-
-  }catch(e){
-    // Network/Supabase down - use defaults, no crash
-    console.warn('[RicsGlam] Load failed, using defaults:',e.message||e);
+    console.log('[RicsGlam] Live data loaded — products:'
+      +products.length+' services:'+services.length
+      +' reviews:'+testimonials.length);
+  } catch(e){
+    console.error('[RicsGlam] loadInitialData failed:', e.message||e);
+    showToast('\u26a0 Could not load site data. Check your connection.','error');
+    /* Render empty state — do NOT fall back to hardcoded data */
     renderAll();
     applyHeroOnLoad();
   }
+}
+
+/* Alias — existing callers use loadFromSupa */
+function loadFromSupa(){
+  return loadInitialData();
 }
 
 

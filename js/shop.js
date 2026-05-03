@@ -104,7 +104,7 @@ function renderBestSellers(){
   if(!g)return;
   // Empty state — show placeholder message instead of crashing
   if(!products||products.length===0){
-    g.innerHTML='<div style="padding:2rem 6%;color:var(--text3);font-size:.9rem">No products yet. Admin can add products via the Edit Site panel.</div>';
+    g.innerHTML='<div style="padding:2rem 6%;color:var(--text3);font-size:.9rem;font-style:italic">New arrivals coming soon — check back shortly!</div>';
     return;
   }
   var best=products.filter(function(p){return p.badge;});
@@ -122,7 +122,7 @@ function filterProds(){
   if(!g)return;
   // Empty DB state
   if(!products||products.length===0){
-    g.innerHTML='<div class="no-results">No products yet. Check back soon!</div>';
+    g.innerHTML='<div class="no-results">New arrivals coming soon — check back shortly!</div>';
     return;
   }
   if(!list.length){g.innerHTML='<div class="no-results">No wigs found. Try a different search.</div>';return;}
@@ -145,7 +145,7 @@ function renderSvcs(){
   var g=document.getElementById('svcsGrid');
   if(!g)return;
   if(!services||services.length===0){
-    g.innerHTML='<div style="color:var(--text3);font-size:.9rem;padding:1rem">No services yet. Admin can add services via the Edit Site panel.</div>';
+    g.innerHTML='<div style="color:var(--text3);font-size:.9rem;padding:1rem;font-style:italic">Our services are being updated — check back soon!</div>';
     return;
   }
   g.innerHTML=services.map(function(s){
@@ -169,7 +169,7 @@ function renderReviews(){
   var g=document.getElementById('reviewsTrack');
   if(!g)return;
   if(!testimonials||testimonials.length===0){
-    g.innerHTML='<div style="color:var(--text3);font-size:.9rem;padding:1rem 6%">No reviews yet. Be the first to share your experience!</div>';
+    g.innerHTML='<div style="color:var(--text3);font-size:.9rem;padding:1rem 6%;font-style:italic">Be the first to share your experience!</div>';
     return;
   }
   g.innerHTML=testimonials.map(function(t){

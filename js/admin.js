@@ -186,87 +186,78 @@ async function handlePSlot(i){
   }
   markEditing();
 }
-function saveProd(){
-  var name=document.getElementById('pName').value.trim();
-  var cat=document.getElementById('pCat').value;
-  var price=parseFloat(document.getElementById('pPrice').value);
-  var desc=document.getElementById('pDesc').value.trim();
-  var inchMin=parseInt(document.getElementById('pInchMin').value)||null;
-  var inchMax=parseInt(document.getElementById('pInchMax').value)||null;
-  var badge=document.getElementById('pBadge').value.trim();
-  /* Always treat editProdId as STRING — matches Supabase text IDs */
-  var eid=(document.getElementById('editProdId').value||'').trim()||null;
-
+async function saveProd(){
+  var name  = document.getElementById('pName').value.trim();
+  var cat   = document.getElementById('pCat').value;
+  var price = parseFloat(document.getElementById('pPrice').value);
+  var desc  = document.getElementById('pDesc').value.trim();
+  var inchMin = parseInt(document.getElementById('pInchMin').value)||null;
+  var inchMax = parseInt(document.getElementById('pInchMax').value)||null;
+  var badge = document.getElementById('pBadge').value.trim();
+  var eid   = (document.getElementById('editProdId').value||'').trim()||null;
   if(!name||!desc||isNaN(price)||price<=0){
     showToast('\u26a0 Fill in all required fields.','warning');
     return;
   }
-
-  var imgs=pendingPImgs.filter(Boolean); /* Storage URLs or base64 */
-
+  var imgs = pendingPImgs.filter(Boolean);
+  if(!_sb){ showToast('\u26a0 Not connected to database.','error'); return; }
+  showToast('\u23f3 Saving product...','info');
+  var row = {
+    name: name, category: cat, description: desc,
+    price: price, badge: badge, icon: '\u2728',
+    images: imgs, inch_min: inchMin, inch_max: inchMax
+  };
+  var dbErr;
   if(eid){
-    /* ── FIX 3: EDIT — findIndex to update in place, NEVER push() ──
-       Checks the full products array by string ID.
-       If found  → mutate that slot only.
-       If not found → add as new (failsafe, should not happen normally). */
-    var idx=products.findIndex(function(p){return String(p.id)===String(eid);});
-    if(idx>-1){
-      products[idx]={
-        id:String(eid),
-        cat:cat,name:name,desc:desc,price:price,badge:badge,
-        icon:products[idx].icon||'\u2728',
-        imgs:imgs.length?imgs:(products[idx].imgs||[]),
-        inchMin:inchMin,inchMax:inchMax
-      };
-      showToast('\u2705 Product updated!','success');
-    }else{
-      /* eid provided but not found — treat as new, no duplicate */
-      var safeFallback='p'+Date.now();
-      products.push({
-        id:safeFallback,cat:cat,name:name,desc:desc,price:price,
-        badge:badge,icon:'\u2728',imgs:imgs,inchMin:inchMin,inchMax:inchMax
-      });
-      showToast('\u2705 Product added!','success');
-    }
-  }else{
-    /* ── NEW product — collision-safe unique ID ── */
-    var newId='p'+Date.now();
-    while(products.findIndex(function(p){return p.id===newId;})>-1){
-      newId='p'+Date.now()+Math.floor(Math.random()*9999);
-    }
-    products.push({
-      id:newId,cat:cat,name:name,desc:desc,price:price,
-      badge:badge,icon:'\u2728',imgs:imgs,inchMin:inchMin,inchMax:inchMax
-    });
-    showToast('\u2705 Product added!','success');
+    /* ── EDIT: direct .update() — never creates a duplicate ── */
+    var existingProd = products.find(function(p){ return String(p.id)===String(eid); });
+    row.images = imgs.length ? imgs : (existingProd ? existingProd.imgs||[] : []);
+    if(existingProd) row.icon = existingProd.icon||'\u2728';
+    var {error:ue} = await _sb.from('products').update(row).eq('id', eid);
+    dbErr = ue;
+    if(!ue) showToast('\u2705 Product updated!','success');
+  } else {
+    /* ── NEW: direct .insert() with collision-safe ID ── */
+    row.id = 'p'+Date.now();
+    var {error:ie} = await _sb.from('products').insert(row);
+    dbErr = ie;
+    if(!ie) showToast('\u2705 Product added!','success');
   }
-
+  if(dbErr){
+    console.error('[RicsGlam] saveProd DB error:', dbErr.message);
+    showToast('\u274c DB error: '+dbErr.message,'error');
+    return;
+  }
+  /* Reset pending images */
+  pendingPImgs = [null,null,null,null];
   closeModal('prodFormOverlay');
-  save();
-  /* Sync immediately so all visitors see the update */
-  if(_sb){syncToSupa();}else{initSupa(function(){syncToSupa();});}
-  renderBestSellers();
-  filterProds();
-  renderAdmLists();
+  /* Re-fetch live data so UI matches DB exactly */
+  await loadInitialData();
+  if(isAdmin) renderAdmLists();
 }
-function deleteProd(){
-  var eid=document.getElementById('editProdId').value;
-  if(!eid||!confirm('Delete this product?'))return;
-  products=products.filter(function(p){return String(p.id)!==String(eid);});
+async function deleteProd(){
+  var eid = document.getElementById('editProdId').value;
+  if(!eid||!confirm('Delete this product?')) return;
+  if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
+  showToast('\u23f3 Deleting...','info');
+  var {error} = await _sb.from('products').delete().eq('id', eid);
+  if(error){
+    showToast('\u274c Delete failed: '+error.message,'error');
+    return;
+  }
   closeModal('prodFormOverlay');
-  // Save to localStorage and Supabase immediately
-  save();
-  deleteFromSupa('products',eid);
-  renderBestSellers();filterProds();renderAdmLists();
-  showToast('🗑 Product deleted.');
+  showToast('\uD83D\uDDD1 Product deleted.','success');
+  await loadInitialData();
+  if(isAdmin) renderAdmLists();
 }
-function deleteProdInline(id){
-  if(!confirm('Delete this product?'))return;
-  products=products.filter(function(p){return String(p.id)!==String(id);});
-  save();
-  deleteFromSupa('products',id);
-  renderBestSellers();filterProds();renderAdmLists();
-  showToast('🗑 Product deleted.');
+async function deleteProdInline(id){
+  if(!confirm('Delete this product?')) return;
+  if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
+  var {error} = await _sb.from('products').delete().eq('id', String(id));
+  if(error){ showToast('\u274c Delete failed: '+error.message,'error'); return; }
+  showToast('\uD83D\uDDD1 Product deleted.','success');
+  await loadInitialData();
+  if(isAdmin) renderAdmLists();
 }
 
 /* ═══════════════════════════════════════════
@@ -301,45 +292,54 @@ function handleSSlot(i){
   };
   reader.readAsDataURL(file);markEditing();
 }
-function saveSvc(){
-  var name=document.getElementById('sName').value.trim();
-  var desc=document.getElementById('sDesc').value.trim();
-  var eid=document.getElementById('editSvcId').value;
-  if(!name||!desc){showToast('⚠️ Fill in all fields.');return;}
-  var imgs=pendingSImgs.filter(Boolean);
+async function saveSvc(){
+  var name = document.getElementById('sName').value.trim();
+  var desc = document.getElementById('sDesc').value.trim();
+  var eid  = document.getElementById('editSvcId').value;
+  if(!name||!desc){ showToast('\u26a0 Fill in all fields.','warning'); return; }
+  if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
+  var imgs = pendingSImgs.filter(Boolean);
+  showToast('\u23f3 Saving service...','info');
+  var row = {name:name, description:desc, icon:'\u2728', images:imgs};
+  var dbErr;
   if(eid){
-    // EDIT — find and update in place, never duplicate
-    var idx=services.findIndex(function(s){return String(s.id)===String(eid);});
-    if(idx>-1){
-      var existingIcon=services[idx].icon||'✨';
-      var finalImgs=imgs.length?imgs:(services[idx].imgs||[]);
-      services[idx]={id:String(eid),name:name,desc:desc,icon:existingIcon,imgs:finalImgs};
-      showToast('✅ Service updated!');
-    }else{
-      // eid not found — add as new
-      var newSvcId='s'+Date.now();
-      services.push({id:newSvcId,name:name,desc:desc,icon:'✨',imgs:imgs});
-      showToast('✅ Service added!');
-    }
-  }else{
-    // NEW service
-    var newSvcId='s'+Date.now();
-    services.push({id:newSvcId,name:name,desc:desc,icon:'✨',imgs:imgs});
-    showToast('✅ Service added!');
+    var existingSvc = services.find(function(s){ return String(s.id)===String(eid); });
+    row.images = imgs.length ? imgs : (existingSvc ? existingSvc.imgs||[] : []);
+    if(existingSvc) row.icon = existingSvc.icon||'\u2728';
+    var {error:ue} = await _sb.from('services').update(row).eq('id', eid);
+    dbErr = ue;
+    if(!ue) showToast('\u2705 Service updated!','success');
+  } else {
+    row.id = 's'+Date.now();
+    var {error:ie} = await _sb.from('services').insert(row);
+    dbErr = ie;
+    if(!ie) showToast('\u2705 Service added!','success');
   }
-  closeModal('svcFormOverlay');markEditing();renderSvcs();renderAdmLists();
+  if(dbErr){ showToast('\u274c DB error: '+dbErr.message,'error'); return; }
+  pendingSImgs = [null,null,null,null];
+  closeModal('svcFormOverlay');
+  await loadInitialData();
+  if(isAdmin) renderAdmLists();
 }
-function deleteSvc(){
-  var eid=document.getElementById('editSvcId').value;
-  if(!eid||!confirm('Delete this service?'))return;
-  services=services.filter(function(s){return String(s.id)!==String(eid);});
-  closeModal('svcFormOverlay');save();deleteFromSupa('services',eid);renderSvcs();renderAdmLists();
-  showToast('🗑 Service deleted.');
+async function deleteSvc(){
+  var eid = document.getElementById('editSvcId').value;
+  if(!eid||!confirm('Delete this service?')) return;
+  if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
+  var {error} = await _sb.from('services').delete().eq('id', eid);
+  if(error){ showToast('\u274c Delete failed: '+error.message,'error'); return; }
+  closeModal('svcFormOverlay');
+  showToast('\uD83D\uDDD1 Service deleted.','success');
+  await loadInitialData();
+  if(isAdmin) renderAdmLists();
 }
-function deleteSvcInline(id){
-  if(!confirm('Delete this service?'))return;
-  services=services.filter(function(s){return String(s.id)!==String(id);});
-  save();deleteFromSupa('services',id);renderSvcs();renderAdmLists();showToast('🗑 Service deleted.');
+async function deleteSvcInline(id){
+  if(!confirm('Delete this service?')) return;
+  if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
+  var {error} = await _sb.from('services').delete().eq('id', String(id));
+  if(error){ showToast('\u274c Delete failed: '+error.message,'error'); return; }
+  showToast('\uD83D\uDDD1 Service deleted.','success');
+  await loadInitialData();
+  if(isAdmin) renderAdmLists();
 }
 
 /* ═══════════════════════════════════════════
@@ -366,50 +366,52 @@ function updateStarPicker(){
     b.style.color=parseInt(b.getAttribute('data-v'))<=currentRevStars?'#2ecc71':'var(--text3)';
   });
 }
-function saveReview(){
-  var name=document.getElementById('revName').value.trim();
-  var loc=document.getElementById('revLoc').value.trim();
-  var title=document.getElementById('revTitle').value.trim();
-  var txt=document.getElementById('revText').value.trim();
-  if(!name||!txt){showToast('⚠️ Name and review text are required.');return;}
-  var now=new Date();
-  var dateStr=now.toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'});
-  var eid=document.getElementById('editReviewId').value;
+async function saveReview(){
+  var name  = document.getElementById('revName').value.trim();
+  var loc   = document.getElementById('revLoc').value.trim();
+  var title = document.getElementById('revTitle').value.trim();
+  var txt   = document.getElementById('revText').value.trim();
+  var eid   = document.getElementById('editReviewId').value;
+  if(!name||!txt){ showToast('\u26a0 Name and review are required.','warning'); return; }
+  if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
+  showToast('\u23f3 Saving review...','info');
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'});
+  var row = {
+    name: name, location: loc||'Accra, Ghana',
+    avatar: '\uD83D\uDC69\uD83C\uDFFE',
+    stars: currentRevStars,
+    title: title||'Great experience!',
+    review_text: txt, review_date: dateStr
+  };
+  var dbErr;
   if(eid){
-    // EDIT — find and update in place, never duplicate
-    var idx=testimonials.findIndex(function(t){return String(t.id)===String(eid);});
-    if(idx>-1){
-      var existingAv=testimonials[idx].av||'👩🏾';
-      testimonials[idx]={
-        id:String(eid),name:name,loc:loc||'Accra, Ghana',
-        av:existingAv,stars:currentRevStars,
-        title:title||'Great experience!',txt:txt,date:dateStr
-      };
-      showToast('✅ Review updated!');
-    }else{
-      // eid not found — add as new
-      var newRevId='t'+Date.now();
-      testimonials.push({id:newRevId,name:name,loc:loc||'Accra, Ghana',
-        av:'👩🏾',stars:currentRevStars,title:title||'Great experience!',
-        txt:txt,date:dateStr});
-      showToast('✅ Review added!');
-    }
-  }else{
-    // NEW review — unique timestamp ID
-    var newRevId='t'+Date.now();
-    testimonials.push({id:newRevId,name:name,loc:loc||'Accra, Ghana',
-      av:'👩🏾',stars:currentRevStars,title:title||'Great experience!',
-      txt:txt,date:dateStr});
-    showToast('✅ Review added!');
+    var existingRev = testimonials.find(function(t){ return String(t.id)===String(eid); });
+    if(existingRev) row.avatar = existingRev.av||'\uD83D\uDC69\uD83C\uDFFE';
+    var {error:ue} = await _sb.from('testimonials').update(row).eq('id', eid);
+    dbErr = ue;
+    if(!ue) showToast('\u2705 Review updated!','success');
+  } else {
+    row.id = 't'+Date.now();
+    var {error:ie} = await _sb.from('testimonials').insert(row);
+    dbErr = ie;
+    if(!ie) showToast('\u2705 Review added!','success');
   }
-  closeModal('reviewFormOverlay');markEditing();renderReviews();renderAdmLists();
+  if(dbErr){ showToast('\u274c DB error: '+dbErr.message,'error'); return; }
+  closeModal('reviewFormOverlay');
+  await loadInitialData();
+  if(isAdmin) renderAdmLists();
 }
-function deleteReview(id){
-  var eid=id||document.getElementById('editReviewId').value;
-  if(!eid||!confirm('Delete this review?'))return;
-  testimonials=testimonials.filter(function(t){return String(t.id)!==String(eid);});
-  closeModal('reviewFormOverlay');save();deleteFromSupa('testimonials',eid);renderReviews();renderAdmLists();
-  showToast('🗑 Review deleted.');
+async function deleteReview(id){
+  var eid = id||document.getElementById('editReviewId').value;
+  if(!eid||!confirm('Delete this review?')) return;
+  if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
+  var {error} = await _sb.from('testimonials').delete().eq('id', eid);
+  if(error){ showToast('\u274c Delete failed: '+error.message,'error'); return; }
+  closeModal('reviewFormOverlay');
+  showToast('\uD83D\uDDD1 Review deleted.','success');
+  await loadInitialData();
+  if(isAdmin) renderAdmLists();
 }
 
 /* ═══════════════════════════════════════════
@@ -464,33 +466,9 @@ async function deleteFromSupa(table,id){
 }
 
 function saveAllChanges(){
-  // Step 1: Save to localStorage immediately
-  save();
-  // Step 2: Sync to Supabase, then clear localStorage cache + reload
-  function afterSync(){
-    // Remove stale localStorage data so next load pulls fresh from Supabase
-    localStorage.removeItem('rg2_products');
-    localStorage.removeItem('rg2_services');
-    localStorage.removeItem('rg2_testimonials');
-    localStorage.removeItem('rg2_categories');
-    localStorage.removeItem('rg2_hero');
-    localStorage.removeItem('rg2_social');
-    showToast('✅ Saved! Refreshing for all visitors...');
-    // Reload after 1.5s so admin sees the toast, then gets fresh live version
-    setTimeout(function(){
-      window.location.reload(true); // true = bypass browser cache
-    }, 1500);
-  }
-  if(_sb){
-    syncToSupa().then(afterSync).catch(function(e){
-      console.error('Sync failed:',e);
-      showToast('⚠️ Sync failed — changes saved locally only.');
-    });
-  }else{
-    initSupa(function(){
-      syncToSupa().then(afterSync).catch(function(e){
-        showToast('⚠️ Sync failed — changes saved locally only.');
-      });
-    });
-  }
+  /* Individual product/service/review saves now go directly to Supabase.
+     saveAllChanges only syncs categories (photos) and site settings
+     (hero flyer, social links) which don't have their own save buttons. */
+  if(_sb){ syncToSupa(); }
+  else{ initSupa(function(){ syncToSupa(); }); }
 }
