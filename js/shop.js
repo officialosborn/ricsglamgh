@@ -77,27 +77,53 @@ function setCat(key){activeCat=key;renderCats();filterProds();}
 /* ═══════════════════════════════════════════
    RENDER PRODUCTS
 ═══════════════════════════════════════════ */
-function makeProductCard(p,forBS){
-  var forBS=forBS||false;
-  var mainImg=p.imgs&&p.imgs[0]?'<img src="'+p.imgs[0]+'?_t='+Date.now()+'" alt="'+p.name+'"/>'
-    :'<div class="prod-img-placeholder">'+p.icon+'</div>';
-  var badgeH=p.badge?'<span class="prod-badge">'+p.badge+'</span>':'';
-  var discH='';
-  return '<div class="prod-card'+(forBS?' bs-card':'')+'" onclick="openProdDetail('+p.id+')">'
-    +'<div class="prod-img-wrap">'+mainImg+badgeH+discH+'</div>'
-    +'<div class="prod-body">'
-    +'<div class="prod-tags"><span class="prod-tag">'+p.cat+'</span>'
-    +(p.inchMin&&p.inchMax?'<span class="prod-tag">'+p.inchMin+'" – '+p.inchMax+'"</span>':'')
-    +'</div>'
-    +'<div class="prod-name">'+p.name+'</div>'
-    +'<div class="prod-desc-short">'+p.desc+'</div>'
-    +'<div class="prod-price-row">'
-    +'<div><span class="prod-price">GH&#8373;'+p.price.toLocaleString()+'</span></div>'
-    +'<button class="prod-cart-btn" onclick="handleCartItem(event,'+p.id+')" title="Add to cart">&#128717;</button>'
-    +'</div>'
-    +'</div>'
-    +(isAdmin?'<div class="prod-adm-bar"><button class="prod-adm-edit" onclick="openProdForm('+p.id+');event.stopPropagation()">Edit</button><button class="prod-adm-del" onclick="deleteProdInline('+p.id+');event.stopPropagation()">Delete</button></div>':'')
-    +'</div>';
+function makeProductCard(p, forBS){
+  forBS = forBS || false;
+
+  /* ── Image: strictly use images[0] from Supabase Storage ── */
+  var imgSrc  = (p.imgs && p.imgs.length > 0) ? p.imgs[0] : '';
+  var imgHtml = imgSrc
+    ? '<img src="' + imgSrc + '" alt="' + p.name + '" loading="lazy" '
+        + 'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" />'
+      + '<div class="prod-img-placeholder" style="display:none">' + (p.icon||'\u2728') + '</div>'
+    : '<div class="prod-img-placeholder">' + (p.icon||'\u2728') + '</div>';
+
+  var badgeHtml = p.badge
+    ? '<span class="prod-badge">' + p.badge + '</span>'
+    : '';
+
+  var inchHtml = (p.inchMin && p.inchMax)
+    ? '<span class="prod-tag">' + p.inchMin + '\u201d \u2013 ' + p.inchMax + '\u201d</span>'
+    : '';
+
+  var adminBar = isAdmin
+    ? '<div class="prod-adm-bar">'
+        + '<button class="prod-adm-edit" '
+            + 'onclick="openProdForm(\'' + p.id + '\');event.stopPropagation()">Edit</button>'
+        + '<button class="prod-adm-del" '
+            + 'onclick="deleteProdInline(\'' + p.id + '\');event.stopPropagation()">Delete</button>'
+        + '</div>'
+    : '';
+
+  return '<div class="prod-card' + (forBS ? ' bs-card' : '') + '" '
+       + 'onclick="openProdDetail(\'' + p.id + '\')">' 
+    + '<div class="prod-img-wrap">' + imgHtml + badgeHtml + '</div>'
+    + '<div class="prod-body">'
+    + '<div class="prod-tags">'
+    + '<span class="prod-tag">' + p.cat + '</span>' + inchHtml
+    + '</div>'
+    + '<div class="prod-name">'  + p.name  + '</div>'
+    + '<div class="prod-desc-short">' + p.desc + '</div>'
+    + '<div class="prod-price-row">'
+    + '<div><span class="prod-price">GH&#8373;'
+    + Number(p.price).toLocaleString() + '</span></div>'
+    + '<button class="prod-cart-btn" '
+        + 'onclick="handleCartItem(event,\'' + p.id + '\')" title="Add to cart">'
+        + '&#128717;</button>'
+    + '</div>'
+    + '</div>'
+    + adminBar
+    + '</div>';
 }
 function renderBestSellers(){
   var g=document.getElementById('bsTrack');
@@ -200,7 +226,7 @@ function openProdDetail(id){
   var mainImg=document.getElementById('pmMainImg');
   var placeholder=document.getElementById('pmImgPlaceholder');
   if(imgs.length){
-    mainImg.src=imgs[0]+'?_t='+Date.now();mainImg.style.display='block';
+    mainImg.src=imgs[0]; /* Storage URL — stable, no cache-bust needed */mainImg.style.display='block';
     placeholder.style.display='none';
   }else{
     mainImg.style.display='none';
@@ -287,10 +313,22 @@ function handleCartItem(e,id){
   addToCart(id);
 }
 function addToCart(id){
-  var existing=cart.find(function(c){return c.id===id;});
-  if(existing){existing.qty++;} else{cart.push({id:id,qty:1});}
+  /* ── Pull product details from the live Supabase state array ── */
+  var prod = products.find(function(p){ return String(p.id)===String(id); });
+  if(!prod){
+    console.warn('[RicsGlam] addToCart: product '+id+' not found in live state');
+    showToast('\u26a0 Product not found. Please refresh the page.','warning');
+    return;
+  }
+  /* Cart stores id + qty only. Price always read from live products[] at checkout. */
+  var existing = cart.find(function(c){ return String(c.id)===String(id); });
+  if(existing){
+    existing.qty++;
+  } else {
+    cart.push({id: String(id), qty: 1});
+  }
   updateCartUI();
-  showToast('🛒 Added to cart!');
+  showToast('\uD83D\uDED2 ' + prod.name.split(' ').slice(0,3).join(' ') + ' added to cart!', 'success');
 }
 function updateCartUI(){
   var total=cart.reduce(function(s,c){return s+c.qty;},0);
@@ -314,55 +352,81 @@ function closeCart(){
   document.getElementById('cartBackdrop').classList.remove('show');
 }
 function renderCartItems(){
-  var container=document.getElementById('cartItems');
-  var footer=document.getElementById('cartFooter');
+  var container = document.getElementById('cartItems');
+  var footer    = document.getElementById('cartFooter');
   if(!cart.length){
-    container.innerHTML='<div class="cart-empty"><div class="cart-empty-ico">🛒</div><div>Your cart is empty</div><div style="font-size:.82rem;color:var(--text3);margin-top:.4rem">Browse our collection and add some wigs!</div></div>';
-    footer.style.display='none';return;
+    container.innerHTML = '<div class="cart-empty">'
+      + '<div class="cart-empty-ico">\uD83D\uDED2</div>'
+      + '<div>Your cart is empty</div>'
+      + '<div style="font-size:.82rem;color:var(--text3);margin-top:.4rem">'
+      + 'Browse our collection and add some wigs!</div></div>';
+    footer.style.display = 'none';
+    return;
   }
-  footer.style.display='block';
-  var html='',total=0;
+  footer.style.display = 'block';
+  var html  = '';
+  var total = 0;
   cart.forEach(function(item){
-    var p=products.find(function(x){return x.id===item.id;});
-    if(!p)return;
-    var subtotal=p.price*item.qty;total+=subtotal;
-    var imgH=p.imgs&&p.imgs[0]?'<img src="'+p.imgs[0]+'" style="width:100%;height:100%;object-fit:cover"/>':p.icon;
-    html+='<div class="cart-item">'
-      +'<div class="cart-item-img">'+imgH+'</div>'
-      +'<div class="cart-item-info">'
-      +'<div class="cart-item-name">'+p.name+'</div>'
-      +'<div class="cart-item-price">GH₵'+p.price.toLocaleString()+'</div>'
-      +'<div class="cart-item-qty">'
-      +'<button class="qty-btn" onclick="changeQty('+item.id+',-1)">−</button>'
-      +'<span class="qty-num">'+item.qty+'</span>'
-      +'<button class="qty-btn" onclick="changeQty('+item.id+',1)">+</button>'
-      +'</div></div>'
-      +'<button class="cart-item-del" onclick="removeFromCart('+item.id+')" title="Remove">✕</button>'
-      +'</div>';
+    /* ── Always look up price from live products[] — never from stale data ── */
+    var p = products.find(function(x){ return String(x.id)===String(item.id); });
+    if(!p) return; /* product was deleted — skip silently */
+    var lineTotal = Number(p.price) * item.qty;
+    total += lineTotal;
+    /* Image: use images[0] from Supabase Storage, fall back to icon */
+    var imgHtml = (p.imgs && p.imgs.length > 0)
+      ? '<img src="' + p.imgs[0] + '" style="width:100%;height:100%;object-fit:cover" />'
+      : p.icon || '\u2728';
+    html += '<div class="cart-item">'
+      + '<div class="cart-item-img">' + imgHtml + '</div>'
+      + '<div class="cart-item-info">'
+      + '<div class="cart-item-name">' + p.name + '</div>'
+      + '<div class="cart-item-price">GH\u20B3' + Number(p.price).toLocaleString() + '</div>'
+      + '<div class="cart-item-qty">'
+      + '<button class="qty-btn" onclick="changeQty(\'' + item.id + '\',-1)">\u2212</button>'
+      + '<span class="qty-num">' + item.qty + '</span>'
+      + '<button class="qty-btn" onclick="changeQty(\'' + item.id + '\',1)">+</button>'
+      + '</div></div>'
+      + '<button class="cart-item-del" onclick="removeFromCart(\'' + item.id + '\')" '
+          + 'title="Remove">\u2715</button>'
+      + '</div>';
   });
-  container.innerHTML=html;
-  document.getElementById('cartSubtotal').textContent='GH₵'+total.toLocaleString();
-  document.getElementById('cartTotal').textContent='GH₵'+total.toLocaleString();
+  container.innerHTML = html;
+  document.getElementById('cartSubtotal').textContent = 'GH\u20B3' + total.toLocaleString();
+  document.getElementById('cartTotal').textContent    = 'GH\u20B3' + total.toLocaleString();
 }
 function changeQty(id,delta){
-  var item=cart.find(function(c){return c.id===id;});
+  var item=cart.find(function(c){return String(c.id)===String(id);});
   if(!item)return;
   item.qty+=delta;
-  if(item.qty<1)cart=cart.filter(function(c){return c.id!==id;});
+  if(item.qty<1)cart=cart.filter(function(c){return String(c.id)!==String(id);});
   updateCartUI();renderCartItems();
 }
 function removeFromCart(id){
-  cart=cart.filter(function(c){return c.id!==id;});
+  cart=cart.filter(function(c){return String(c.id)!==String(id);});
   updateCartUI();renderCartItems();
 }
 function checkoutWA(){
-  if(!cart.length)return;
-  var lines=cart.map(function(item){
-    var p=products.find(function(x){return x.id===item.id;});
-    return p?'• '+p.name+' x'+item.qty+' = GH₵'+(p.price*item.qty).toLocaleString():'';
-  }).filter(Boolean);
-  var total=cart.reduce(function(s,c){var p=products.find(function(x){return x.id===c.id;});return s+(p?p.price*c.qty:0);},0);
-  var msg='Hello Ric\'s Glam! 👋\n\nI\'d like to order:\n\n'+lines.join('\n')+'\n\nTotal: GH₵'+total.toLocaleString()+'\n\nPlease confirm and arrange delivery. Thank you!';
+  if(!cart.length) return;
+  /* Build order from live products[] — always current price */
+  var lines = [];
+  var total = 0;
+  cart.forEach(function(item){
+    var p = products.find(function(x){ return String(x.id)===String(item.id); });
+    if(!p) return;
+    var lineTotal = Number(p.price) * item.qty;
+    total += lineTotal;
+    lines.push('\u2022 ' + p.name + ' x' + item.qty
+      + ' = GH\u20B3' + lineTotal.toLocaleString());
+  });
+  if(!lines.length){
+    showToast('\u26a0 Cart is empty or products not loaded.','warning');
+    return;
+  }
+  var msg = 'Hello Ric\'s Glam! \uD83D\uDC4B\n\n'
+    + 'I\'d like to order:\n\n'
+    + lines.join('\n')
+    + '\n\nTotal: GH\u20B3' + total.toLocaleString()
+    + '\n\nPlease confirm and arrange delivery. Thank you!';
   window.open('https://wa.me/233209823469?text='+encodeURIComponent(msg),'_blank');
 }
 

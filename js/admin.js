@@ -237,24 +237,77 @@ async function saveProd(){
 }
 async function deleteProd(){
   var eid = document.getElementById('editProdId').value;
-  if(!eid||!confirm('Delete this product?')) return;
+  if(!eid || !confirm('Delete this product? This will also remove its images.')) return;
   if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
-  showToast('\u23f3 Deleting...','info');
-  var {error} = await _sb.from('products').delete().eq('id', eid);
-  if(error){
-    showToast('\u274c Delete failed: '+error.message,'error');
+  showToast('\u23f3 Deleting product...','info');
+
+  /* ── Step 1: Find the product in current state to get its images ── */
+  var prod = products.find(function(p){ return String(p.id)===String(eid); });
+  var imgs = (prod && prod.imgs && prod.imgs.length) ? prod.imgs : [];
+
+  /* ── Step 2: Delete image files from Supabase Storage ── */
+  if(imgs.length > 0){
+    var filePaths = imgs
+      .filter(function(url){ return url && url.includes('product-images'); })
+      .map(function(url){
+        /* Extract path after '/product-images/' from the public URL */
+        var marker = '/product-images/';
+        var idx    = url.indexOf(marker);
+        return idx >= 0 ? url.substring(idx + marker.length) : null;
+      })
+      .filter(Boolean);
+
+    if(filePaths.length > 0){
+      var {error:storErr} = await _sb.storage
+        .from('product-images')
+        .remove(filePaths);
+      if(storErr){
+        console.warn('[RicsGlam] Storage delete warning:', storErr.message);
+        /* Non-fatal — continue to delete the DB row */
+      } else {
+        console.log('[RicsGlam] Deleted '+filePaths.length+' image(s) from storage');
+      }
+    }
+  }
+
+  /* ── Step 3: Delete the product row from the database ── */
+  var {error:dbErr} = await _sb.from('products').delete().eq('id', eid);
+  if(dbErr){
+    showToast('\u274c Delete failed: '+dbErr.message,'error');
     return;
   }
   closeModal('prodFormOverlay');
-  showToast('\uD83D\uDDD1 Product deleted.','success');
+  showToast('\uD83D\uDDD1 Product and images deleted.','success');
   await loadInitialData();
   if(isAdmin) renderAdmLists();
 }
 async function deleteProdInline(id){
-  if(!confirm('Delete this product?')) return;
+  if(!confirm('Delete this product? This will also remove its images.')) return;
   if(!_sb){ showToast('\u26a0 Not connected.','error'); return; }
-  var {error} = await _sb.from('products').delete().eq('id', String(id));
-  if(error){ showToast('\u274c Delete failed: '+error.message,'error'); return; }
+  showToast('\u23f3 Deleting...','info');
+
+  /* ── Storage cleanup ── */
+  var prod = products.find(function(p){ return String(p.id)===String(id); });
+  var imgs = (prod && prod.imgs && prod.imgs.length) ? prod.imgs : [];
+  if(imgs.length > 0){
+    var filePaths = imgs
+      .filter(function(url){ return url && url.includes('product-images'); })
+      .map(function(url){
+        var marker = '/product-images/';
+        var idx    = url.indexOf(marker);
+        return idx >= 0 ? url.substring(idx + marker.length) : null;
+      })
+      .filter(Boolean);
+    if(filePaths.length > 0){
+      var {error:storErr} = await _sb.storage
+        .from('product-images').remove(filePaths);
+      if(storErr) console.warn('[RicsGlam] Storage delete warning:', storErr.message);
+    }
+  }
+
+  /* ── DB row delete ── */
+  var {error:dbErr} = await _sb.from('products').delete().eq('id', String(id));
+  if(dbErr){ showToast('\u274c Delete failed: '+dbErr.message,'error'); return; }
   showToast('\uD83D\uDDD1 Product deleted.','success');
   await loadInitialData();
   if(isAdmin) renderAdmLists();
