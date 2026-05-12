@@ -482,27 +482,100 @@ function openCatPhoto(id){
   if(c.img){prev.src=c.img;zone.classList.add('has');}else{prev.src='';zone.classList.remove('has');}
   openModal('catPhotoOverlay');
 }
-function handleCatPhoto(inp){
+async function handleCatPhoto(inp){
   var file=inp.files[0];if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    pendingCatImg=e.target.result;
-    var z=document.getElementById('catPhotoZone');
-    var p=document.getElementById('catPhotoPrev');
-    p.src=e.target.result;z.classList.add('has');
-  };
-  reader.readAsDataURL(file);markEditing();
+  /* Show preview immediately using object URL */
+  var previewUrl=URL.createObjectURL(file);
+  var z=document.getElementById('catPhotoZone');
+  var p=document.getElementById('catPhotoPrev');
+  p.src=previewUrl;
+  z.classList.add('has');
+  /* Upload to Supabase Storage straight away */
+  if(_sb){
+    var ext=file.name.split('.').pop()||'jpg';
+    var path='categories/'+Date.now()+'.'+ext;
+    showToast('\u23f3 Uploading category photo...','info');
+    var {data:upData,error:upErr}=await _sb.storage
+      .from('product-images')
+      .upload(path,file,{cacheControl:'3600',upsert:true});
+    if(upErr){
+      console.warn('[RicsGlam] Cat photo upload error:',upErr.message);
+      showToast('\u26a0 Upload failed — will use local preview.','warning');
+      /* Fallback: store as base64 so admin is not blocked */
+      var reader=new FileReader();
+      reader.onload=function(e){pendingCatImg=e.target.result;};
+      reader.readAsDataURL(file);
+      return;
+    }
+    /* Get the stable public URL from Storage */
+    var {data:urlData}=_sb.storage
+      .from('product-images')
+      .getPublicUrl(path);
+    pendingCatImg = urlData&&urlData.publicUrl ? urlData.publicUrl : previewUrl;
+    showToast('\u2705 Photo ready — click Save Photo.','success');
+  }else{
+    /* Supabase not ready — fall back to base64 */
+    var reader=new FileReader();
+    reader.onload=function(e){pendingCatImg=e.target.result;};
+    reader.readAsDataURL(file);
+  }
 }
-function saveCatPhoto(){
+async function saveCatPhoto(){
+  var id = document.getElementById('editCatId').value;
+  var c  = categories.find(function(x){ return x.id===id; });
+  if(!c || !pendingCatImg){
+    showToast('⚠ Please upload a photo first.','warning');
+    return;
+  }
+  /* Step 1: update local state so UI reflects change immediately */
+  c.img = pendingCatImg;
+  renderCats();
+
+  /* Step 2: persist directly to Supabase — no need to click Save Changes */
+  if(_sb){
+    showToast('⏳ Saving category photo...','info');
+    var row = {
+      id:      c.id,
+      cat_key: c.key,
+      label:   c.label,
+      emoji:   c.emoji,
+      image:   c.img
+    };
+    var {error} = await _sb
+      .from('categories')
+      .upsert(row, {onConflict:'id'});
+    if(error){
+      console.error('[RicsGlam] saveCatPhoto DB error:', error.message);
+      showToast('❌ Failed to save: '+error.message,'error');
+      return;
+    }
+    showToast('✅ Category photo saved!','success');
+  } else {
+    /* Supabase not connected — mark dirty for next Save Changes */
+    markEditing();
+    showToast('✅ Photo saved locally (will sync on Save Changes).','info');
+  }
+  pendingCatImg = null;
+  renderAdmLists();
+  closeModal('catPhotoOverlay');
+}
+async function clearCatPhoto(){
   var id=document.getElementById('editCatId').value;
   var c=categories.find(function(x){return x.id===id;});
-  if(c&&pendingCatImg){c.img=pendingCatImg;markEditing();renderCats();renderAdmLists();closeModal('catPhotoOverlay');showToast('✅ Category photo saved!');}
-  else{showToast('⚠️ Please upload a photo first.');}
-}
-function clearCatPhoto(){
-  var id=document.getElementById('editCatId').value;
-  var c=categories.find(function(x){return x.id===id;});
-  if(c){c.img=null;pendingCatImg=null;markEditing();renderCats();renderAdmLists();closeModal('catPhotoOverlay');showToast('Photo removed.');}
+  if(!c) return;
+  c.img=null;
+  pendingCatImg=null;
+  renderCats();
+  if(_sb){
+    var {error}=await _sb.from('categories')
+      .upsert({id:c.id,cat_key:c.key,label:c.label,emoji:c.emoji,image:null},{onConflict:'id'});
+    if(error) console.warn('[RicsGlam] clearCatPhoto error:',error.message);
+  }else{
+    markEditing();
+  }
+  renderAdmLists();
+  closeModal('catPhotoOverlay');
+  showToast('\uD83D\uDDD1 Photo removed.','success');
 }
 
 /* ═══════════════════════════════════════════
