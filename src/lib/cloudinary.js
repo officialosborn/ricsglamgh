@@ -1,5 +1,5 @@
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'ddwpunkxg'
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ricsglam_uploads'
 
 export async function uploadImage(file) {
   const formData = new FormData()
@@ -17,7 +17,5 @@ export async function uploadImage(file) {
 }
 
 export async function deleteImage(publicId) {
-  // Deletion from frontend requires signed requests — handle via Supabase Edge Function or just orphan cleanup
-  // For now we store public_id and can batch delete from Cloudinary dashboard
   console.log('Image to delete:', publicId)
 }
