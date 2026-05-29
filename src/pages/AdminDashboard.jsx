@@ -781,6 +781,48 @@ export default function AdminDashboard() {
                 </label>
               </div>
 
+              {/* Hero Image */}
+              <div className="settings-card">
+                <h4>Homepage Hero Image</h4>
+                <p style={{fontSize:'0.8rem', color:'var(--text-muted, #888)', marginBottom:'0.75rem'}}>Background image for the hero section. Leave empty for the default styled design.</p>
+                {settings.hero_image && (
+                  <img src={settings.hero_image} alt="Hero" className="banner-preview" />
+                )}
+                <label className="upload-area">
+                  <FiUpload size={18} />
+                  <span>{uploading ? 'Uploading...' : 'Upload hero background image'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files[0]
+                      if (!file) return
+                      setUploading(true)
+                      try {
+                        const { url } = await uploadImage(file)
+                        await updateSetting('hero_image', url)
+                        setSettings(prev => ({ ...prev, hero_image: url }))
+                      } catch { toast.error('Upload failed') }
+                      finally { setUploading(false) }
+                    }}
+                    style={{ display: 'none' }}
+                    disabled={uploading}
+                  />
+                </label>
+                {settings.hero_image && (
+                  <button
+                    className="btn-cancel"
+                    style={{marginTop:'0.5rem', width:'100%'}}
+                    onClick={async () => {
+                      await updateSetting('hero_image', '')
+                      setSettings(prev => ({ ...prev, hero_image: '' }))
+                    }}
+                  >
+                    Remove Hero Image
+                  </button>
+                )}
+              </div>
+
               {/* Contact Settings */}
               {[
                 { key: 'whatsapp', label: 'WhatsApp Number', placeholder: '233209823469' },

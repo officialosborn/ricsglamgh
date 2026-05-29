@@ -18,6 +18,7 @@ export default function Home() {
   const [testimonials, setTestimonials] = useState([])
   const [ratings, setRatings] = useState([])
   const [ctaBanner, setCtaBanner] = useState('')
+  const [heroImage, setHeroImage] = useState('')
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [orderModalOpen, setOrderModalOpen] = useState(false)
   const [ratingModalOpen, setRatingModalOpen] = useState(false)
@@ -34,13 +35,18 @@ export default function Home() {
       supabase.from('products').select('*').eq('featured', true).limit(8),
       supabase.from('testimonials').select('*').limit(3),
       supabase.from('ratings').select('*').eq('status', 'approved').order('created_at', { ascending: false }).limit(6),
-      supabase.from('settings').select('*').eq('key', 'cta_banner').single(),
+      supabase.from('settings').select('*'),
     ])
     if (svc) setServices(svc)
     if (prod) setFeaturedProducts(prod)
     if (test) setTestimonials(test)
     if (rat) setRatings(rat)
-    if (set?.value) setCtaBanner(set.value)
+    if (set) {
+      const cta = set.find(s => s.key === 'cta_banner')
+      const hero = set.find(s => s.key === 'hero_image')
+      if (cta?.value) setCtaBanner(cta.value)
+      if (hero?.value) setHeroImage(hero.value)
+    }
   }
 
   const handleOrderClick = (product) => {
@@ -62,20 +68,41 @@ export default function Home() {
 
   return (
     <div className="home page-enter">
+
       {/* HERO */}
-      <section className="hero">
-        <div className="hero-bg" />
+      <section className="hero" style={heroImage ? { '--hero-bg': `url(${heroImage})` } : {}}>
+        <div className={`hero-bg ${heroImage ? 'has-image' : ''}`} />
+
+        {/* Decorative corner lines */}
+        <div className="hero-corner hero-corner-tl" />
+        <div className="hero-corner hero-corner-tr" />
+        <div className="hero-corner hero-corner-bl" />
+        <div className="hero-corner hero-corner-br" />
+
+        {/* Floating gold lines */}
+        <div className="hero-line hero-line-1" />
+        <div className="hero-line hero-line-2" />
+        <div className="hero-line hero-line-3" />
+
         <div className="hero-content container">
-          <div className="hero-text">
-            <span className="hero-eyebrow">Welcome to</span>
+          <div className="hero-left">
+            <div className="hero-tag">
+              <span className="hero-tag-line" />
+              <span>Accra's Premier Beauty Studio</span>
+              <span className="hero-tag-line" />
+            </div>
+
             <h1 className="hero-title">
-              Ric's <em>Glam</em>
+              <span className="hero-title-small">Welcome to</span>
+              <span className="hero-title-main">Ric's</span>
+              <span className="hero-title-glam">Glam</span>
             </h1>
+
             <p className="hero-subtitle">
               Premium wigs, lashes & beauty services — crafted for the woman who demands nothing less than extraordinary.
             </p>
+
             <div className="hero-actions">
-              {/* Shop Now with dropdown */}
               <div className="hero-dropdown-wrap">
                 <button
                   className="btn-primary hero-btn"
@@ -85,15 +112,9 @@ export default function Home() {
                 </button>
                 {shopDropdownOpen && (
                   <div className="hero-dropdown">
-                    <Link to="/shop?category=wigs" onClick={() => setShopDropdownOpen(false)}>
-                      Wigs
-                    </Link>
-                    <Link to="/shop?category=lashes" onClick={() => setShopDropdownOpen(false)}>
-                      Lashes
-                    </Link>
-                    <Link to="/shop" onClick={() => setShopDropdownOpen(false)}>
-                      All Products
-                    </Link>
+                    <Link to="/shop?category=wigs" onClick={() => setShopDropdownOpen(false)}>Wigs</Link>
+                    <Link to="/shop?category=lashes" onClick={() => setShopDropdownOpen(false)}>Lashes</Link>
+                    <Link to="/shop" onClick={() => setShopDropdownOpen(false)}>All Products</Link>
                   </div>
                 )}
               </div>
@@ -101,13 +122,55 @@ export default function Home() {
                 Book a Service
               </button>
             </div>
+
+            {/* Stats row */}
+            <div className="hero-stats">
+              <div className="hero-stat">
+                <span className="stat-number">8+</span>
+                <span className="stat-label">Services</span>
+              </div>
+              <div className="hero-stat-divider" />
+              <div className="hero-stat">
+                <span className="stat-number">100%</span>
+                <span className="stat-label">Premium Quality</span>
+              </div>
+              <div className="hero-stat-divider" />
+              <div className="hero-stat">
+                <span className="stat-number">★ 5.0</span>
+                <span className="stat-label">Client Rated</span>
+              </div>
+            </div>
           </div>
-          <div className="hero-decor">
-            <div className="hero-circle hero-circle-1" />
-            <div className="hero-circle hero-circle-2" />
-            <div className="hero-brand-text">Glam</div>
+
+          <div className="hero-right">
+            <div className="hero-visual">
+              {/* Outer ring */}
+              <div className="hero-ring hero-ring-outer" />
+              {/* Middle ring */}
+              <div className="hero-ring hero-ring-mid" />
+              {/* Inner filled circle */}
+              <div className="hero-circle-inner">
+                <span className="hero-circle-text-top">Luxury</span>
+                <span className="hero-brand-display">R</span>
+                <span className="hero-circle-text-bot">Beauty</span>
+              </div>
+              {/* Floating badges */}
+              <div className="hero-badge hero-badge-1">
+                <FaWhatsapp size={14} />
+                <span>Book Now</span>
+              </div>
+              <div className="hero-badge hero-badge-2">
+                <span>✦</span>
+                <span>Premium</span>
+              </div>
+              <div className="hero-badge hero-badge-3">
+                <span>★</span>
+                <span>Top Rated</span>
+              </div>
+            </div>
           </div>
         </div>
+
         <div className="hero-scroll-hint">
           <span>Scroll</span>
           <div className="scroll-line" />
@@ -157,19 +220,13 @@ export default function Home() {
                 <div key={product.id} className="product-card">
                   <Link to={`/shop/${product.id}`} className="product-image-wrap">
                     {product.images?.[0] ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        loading="lazy"
-                      />
+                      <img src={product.images[0]} alt={product.name} loading="lazy" />
                     ) : (
                       <div className="product-image-placeholder">
                         <span>Ric's Glam</span>
                       </div>
                     )}
-                    <div className="product-overlay">
-                      <span>View Details</span>
-                    </div>
+                    <div className="product-overlay"><span>View Details</span></div>
                     {!product.in_stock && (
                       <div className="out-of-stock-badge">Out of Stock</div>
                     )}
@@ -221,9 +278,7 @@ export default function Home() {
               <p>Discover premium wigs and lashes, or book your beauty appointment today.</p>
               <div className="cta-banner-btns">
                 <Link to="/shop" className="btn-primary">Shop Now</Link>
-                <button className="btn-gold" onClick={scrollToBooking}>
-                  Book Appointment
-                </button>
+                <button className="btn-gold" onClick={scrollToBooking}>Book Appointment</button>
               </div>
             </div>
           </div>
@@ -260,18 +315,13 @@ export default function Home() {
             <h2 className="section-title">Client Ratings</h2>
             <div className="divider" />
           </div>
-
           {ratings.length > 0 && (
             <div className="ratings-grid">
               {ratings.map(r => (
                 <div key={r.id} className="rating-card">
                   <div className="rating-stars">
                     {[...Array(5)].map((_, i) => (
-                      <FaStar
-                        key={i}
-                        size={14}
-                        color={i < r.star_rating ? 'var(--accent-gold)' : 'var(--border)'}
-                      />
+                      <FaStar key={i} size={14} color={i < r.star_rating ? 'var(--accent-gold)' : 'var(--border)'} />
                     ))}
                   </div>
                   {r.comment && <p>{r.comment}</p>}
@@ -280,42 +330,21 @@ export default function Home() {
               ))}
             </div>
           )}
-
           <div className="ratings-cta">
             <p>Enjoyed our services? Share your experience.</p>
-            <button className="btn-primary" onClick={handleRatingSubmit}>
-              Rate Our Services
-            </button>
+            <button className="btn-primary" onClick={handleRatingSubmit}>Rate Our Services</button>
           </div>
         </div>
       </section>
 
-      {/* MODALS */}
       {authModalOpen && (
-        <AuthModal
-          onClose={() => setAuthModalOpen(false)}
-          onSuccess={() => {
-            setAuthModalOpen(false)
-            setRatingModalOpen(true)
-          }}
-        />
+        <AuthModal onClose={() => setAuthModalOpen(false)} onSuccess={() => { setAuthModalOpen(false); setRatingModalOpen(true) }} />
       )}
-
       {orderModalOpen && selectedProduct && (
-        <OrderModal
-          product={selectedProduct}
-          onClose={() => setOrderModalOpen(false)}
-        />
+        <OrderModal product={selectedProduct} onClose={() => setOrderModalOpen(false)} />
       )}
-
       {ratingModalOpen && (
-        <RatingModal
-          onClose={() => setRatingModalOpen(false)}
-          onSuccess={() => {
-            setRatingModalOpen(false)
-            toast.success('Thank you! Your rating has been submitted for review.')
-          }}
-        />
+        <RatingModal onClose={() => setRatingModalOpen(false)} onSuccess={() => { setRatingModalOpen(false); toast.success('Thank you! Your rating has been submitted for review.') }} />
       )}
     </div>
   )
