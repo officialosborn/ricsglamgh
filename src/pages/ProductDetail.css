@@ -1,0 +1,261 @@
+.product-detail {
+  padding: 7rem 0 5rem;
+  min-height: 100vh;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2.5rem;
+  transition: color 0.3s ease;
+}
+
+.back-link:hover {
+  color: var(--accent-primary);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: start;
+}
+
+/* Gallery */
+.detail-gallery {
+  position: sticky;
+  top: 6rem;
+}
+
+.main-image-wrap {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  margin-bottom: 1rem;
+}
+
+.main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: fadeIn 0.3s ease;
+}
+
+.detail-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pink-light);
+}
+
+.detail-image-placeholder span {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  color: var(--accent-primary);
+  opacity: 0.3;
+  font-style: italic;
+}
+
+.gallery-prev,
+.gallery-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #000;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.gallery-prev { left: 0.75rem; }
+.gallery-next { right: 0.75rem; }
+
+.gallery-prev:hover,
+.gallery-next:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.detail-out-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.75rem;
+}
+
+/* Thumbnails */
+.thumbnails {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.thumbnail {
+  flex-shrink: 0;
+  width: 72px;
+  height: 86px;
+  border: 2px solid transparent;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  background: none;
+  padding: 0;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail.active {
+  border-color: var(--accent-primary);
+}
+
+/* Product Info */
+.detail-info {
+  padding-top: 0.5rem;
+}
+
+.detail-info .product-category {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.detail-info h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 300;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.detail-price {
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: var(--accent-primary);
+  margin: 1.25rem 0;
+}
+
+.detail-description {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.detail-meta {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.meta-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.meta-value {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.in-stock { color: #22c55e; }
+.out-stock { color: #ef4444; }
+
+/* Loading / Not found */
+.detail-loading,
+.detail-not-found {
+  padding: 8rem 2rem;
+  text-align: center;
+}
+
+.detail-skeleton {
+  max-width: 900px;
+  margin: 0 auto;
+  height: 500px;
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border) 50%, var(--bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@media (max-width: 900px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .detail-gallery {
+    position: static;
+  }
+
+  /* Mobile: swipe gallery */
+  .main-image-wrap {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    display: flex;
+    aspect-ratio: unset;
+    height: 380px;
+  }
+
+  .main-image {
+    flex-shrink: 0;
+    width: 100%;
+    scroll-snap-align: start;
+    object-fit: cover;
+  }
+
+  .gallery-prev,
+  .gallery-next {
+    display: none;
+  }
+
+  .thumbnails {
+    display: none;
+  }
+}
