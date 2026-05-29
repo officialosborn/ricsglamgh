@@ -59,7 +59,7 @@ export default function Shop() {
         <aside className="shop-filters">
           <div className="filter-group">
             <h4>Category</h4>
-            {['all', 'wigs', 'lashes'].map(cat => (
+            {['all', 'wigs', 'lashes', 'serum & oil'].map(cat => (
               <button
                 key={cat}
                 className={`filter-btn ${category === cat ? 'active' : ''}`}

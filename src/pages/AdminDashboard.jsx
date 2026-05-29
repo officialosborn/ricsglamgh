@@ -448,6 +448,7 @@ export default function AdminDashboard() {
                         >
                           <option value="wigs">Wigs</option>
                           <option value="lashes">Lashes</option>
+                          <option value="serum & oil">Serum & Oil</option>
                         </select>
                       </div>
                       <div className="form-group">
