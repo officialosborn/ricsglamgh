@@ -1,261 +1,42 @@
-.about-page {
-  padding-top: 5rem;
-  min-height: 100vh;
-}
-
-.about-header {
-  padding: 4rem 0 2rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
-}
-
-/* About Content */
-.about-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 5rem;
-  align-items: center;
-}
-
-.about-text h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-  font-weight: 300;
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
-}
-
-.about-text p {
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-  line-height: 1.8;
-  margin-bottom: 1.25rem;
-}
-
-.about-values {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-top: 2.5rem;
-  padding-top: 2.5rem;
-  border-top: 1px solid var(--border);
-}
-
-.value-item h4 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.2rem;
-  color: var(--accent-primary);
-  margin-bottom: 0.4rem;
-}
-
-.value-item p {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* About Brand Decor */
-.about-decor {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.about-brand-block {
-  text-align: center;
-  position: relative;
-  padding: 4rem;
-  border: 1px solid var(--border);
-}
-
-.about-brand-block::before {
-  content: '';
-  position: absolute;
-  inset: 12px;
-  border: 1px solid var(--border);
-  pointer-events: none;
-}
-
-.about-brand-name {
-  display: block;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 4rem;
-  font-weight: 300;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.about-brand-glam {
-  display: block;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 4rem;
-  font-weight: 600;
-  font-style: italic;
-  color: var(--accent-primary);
-  line-height: 1;
-  margin-bottom: 1rem;
-}
-
-.about-brand-block p {
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--accent-gold);
-}
-
-/* Contact Section */
-.contact-section {
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border);
-  padding: 5rem 0;
-}
-
-.contact-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 3rem;
-  align-items: start;
-}
-
-.contact-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-bottom: 1.5rem;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem 0;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-primary);
-  transition: color 0.3s ease;
-}
-
-.contact-item:last-child {
-  border-bottom: none;
-}
-
-a.contact-item:hover {
-  color: var(--accent-primary);
-}
-
-.contact-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.whatsapp-icon { background: rgba(37, 211, 102, 0.1); color: #25D366; }
+.about-page { padding-top: 5rem; min-height: 100vh; }
+.about-header { padding: 4rem 0 2rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+.about-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 5rem; align-items: center; }
+.about-text h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 3vw, 2.7rem); font-weight: 300; color: var(--text-primary); margin-bottom: 1.5rem; }
+.about-text p { font-size: 1rem; color: var(--text-secondary); line-height: 1.8; margin-bottom: 1.25rem; }
+.about-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2.5rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+.value-item h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--accent-primary); margin-bottom: 0.4rem; }
+.value-item p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
+.about-decor { display: flex; align-items: center; justify-content: center; }
+.about-brand-block { text-align: center; position: relative; padding: 4rem; border: 1px solid var(--border); }
+.about-brand-block::before { content: ''; position: absolute; inset: 12px; border: 1px solid var(--border); pointer-events: none; }
+.about-brand-name { display: block; font-family: 'Cormorant Garamond', serif; font-size: 4rem; font-weight: 300; color: var(--text-primary); line-height: 1; }
+.about-brand-glam { display: block; font-family: 'Cormorant Garamond', serif; font-size: 4rem; font-weight: 600; font-style: italic; color: var(--accent-primary); line-height: 1; margin-bottom: 1rem; }
+.about-brand-block p { font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent-gold); }
+.contact-section { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 5rem 0; }
+.contact-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 3rem; align-items: start; }
+.contact-card { background: var(--bg-card); border: 1px solid var(--border); padding: 2rem; display: flex; flex-direction: column; gap: 0; margin-bottom: 1.5rem; }
+.contact-item { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border); color: var(--text-primary); transition: color 0.3s; }
+.contact-item:last-child { border-bottom: none; }
+a.contact-item:hover { color: var(--accent-primary); }
+.contact-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.whatsapp-icon { background: rgba(37,211,102,0.1); color: #25D366; }
 .email-icon { background: var(--pink-light); color: var(--accent-primary); }
-.location-icon { background: rgba(212, 160, 23, 0.1); color: var(--accent-gold); }
-
-.contact-label {
-  display: block;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 0.2rem;
-}
-
-.contact-value {
-  display: block;
-  font-size: 0.92rem;
-  color: inherit;
-}
-
-/* Social Links */
-.social-section h4 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1rem;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-  letter-spacing: 0.05em;
-}
-
-.social-links {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.social-link-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border: 1.5px solid var(--border);
-  font-size: 0.82rem;
-  letter-spacing: 0.08em;
-  color: var(--text-secondary);
-  transition: all 0.3s ease;
-}
-
-.social-link-item:hover {
-  transform: translateY(-2px);
-}
-
-.social-link-item.whatsapp:hover {
-  border-color: #25D366;
-  color: #25D366;
-  background: rgba(37, 211, 102, 0.06);
-}
-
-.social-link-item.tiktok:hover {
-  border-color: #000;
-  color: #000;
-  background: rgba(0, 0, 0, 0.04);
-}
-
-[data-theme="dark"] .social-link-item.tiktok:hover {
-  border-color: #fff;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.social-link-item.snapchat:hover {
-  border-color: #FFFC00;
-  color: #b8a800;
-  background: rgba(255, 252, 0, 0.06);
-}
-
-/* Map */
-.map-container {
-  height: 450px;
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.map-container iframe {
-  filter: grayscale(20%);
-}
-
+.location-icon { background: rgba(212,160,23,0.1); color: var(--accent-gold); }
+.contact-label { display: block; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.2rem; }
+.contact-value { display: block; font-size: 0.98rem; color: inherit; }
+.social-section h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 1rem; letter-spacing: 0.05em; }
+.social-links { display: flex; gap: 0.75rem; }
+.social-link-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; border: 1.5px solid var(--border); font-size: 0.88rem; letter-spacing: 0.08em; color: var(--text-secondary); transition: all 0.3s; }
+.social-link-item:hover { transform: translateY(-2px); }
+.social-link-item.whatsapp:hover { border-color: #25D366; color: #25D366; background: rgba(37,211,102,0.06); }
+.social-link-item.tiktok:hover { border-color: #000; color: #000; background: rgba(0,0,0,0.04); }
+[data-theme="dark"] .social-link-item.tiktok:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.06); }
+.social-link-item.snapchat:hover { border-color: #FFFC00; color: #b8a800; background: rgba(255,252,0,0.06); }
+.map-container { height: 450px; border: 1px solid var(--border); overflow: hidden; }
+.map-container iframe { filter: grayscale(20%); }
 @media (max-width: 900px) {
-  .about-grid,
-  .contact-grid {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-  }
-
-  .about-decor {
-    display: none;
-  }
-
-  .about-values {
-    grid-template-columns: 1fr;
-  }
-
-  .social-links {
-    flex-wrap: wrap;
-  }
+  .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .about-decor { display: none; }
+  .about-values { grid-template-columns: 1fr; }
+  .social-links { flex-wrap: wrap; }
 }

@@ -7,6 +7,14 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: 'index.html',
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+          icons: ['react-icons'],
+        },
+      },
     },
+    chunkSizeWarningLimit: 600,
   },
 })

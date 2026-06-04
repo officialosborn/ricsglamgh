@@ -1,139 +1,19 @@
-.footer {
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border);
-  padding: 4rem 0 0;
-  margin-top: 5rem;
-}
-
-.footer-inner {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 3rem;
-  padding-bottom: 3rem;
-}
-
-.footer-logo {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--accent-primary);
-  margin-bottom: 0.75rem;
-}
-
-.footer-brand p {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  max-width: 280px;
-  margin-bottom: 1.5rem;
-}
-
-.footer-socials {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.social-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px solid var(--border);
-  color: var(--text-secondary);
-  transition: all 0.3s ease;
-}
-
-.social-icon:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px var(--shadow);
-}
-
-.social-icon.whatsapp:hover {
-  background: #25D366;
-  border-color: #25D366;
-  color: white;
-}
-
-.social-icon.tiktok:hover {
-  background: #000;
-  border-color: #000;
-  color: white;
-}
-
-.social-icon.snapchat:hover {
-  background: #FFFC00;
-  border-color: #FFFC00;
-  color: #000;
-}
-
-.footer-links h4,
-.footer-contact h4 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 1.25rem;
-  letter-spacing: 0.05em;
-}
-
-.footer-links ul,
-.footer-contact ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.footer-links a {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
-  letter-spacing: 0.05em;
-}
-
-.footer-links a:hover {
-  color: var(--accent-primary);
-}
-
-.footer-contact a,
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
-}
-
-.footer-contact a:hover {
-  color: var(--accent-primary);
-}
-
-.footer-bottom {
-  border-top: 1px solid var(--border);
-  padding: 1.25rem 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.footer-bottom p {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
-}
-
-@media (max-width: 768px) {
-  .footer-inner {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .footer-bottom {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
-  }
-}
+.footer { background:var(--bg-secondary); border-top:1px solid var(--border); padding:4rem 0 0; margin-top:5rem; }
+.footer-inner { display:grid; grid-template-columns:2fr 1fr 1fr; gap:3rem; padding-bottom:3rem; }
+.footer-logo { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--accent-primary); margin-bottom:0.75rem; }
+.footer-brand p { font-size:0.9rem; color:var(--text-secondary); line-height:1.6; max-width:280px; margin-bottom:1.5rem; }
+.footer-socials { display:flex; gap:0.75rem; }
+.social-icon { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--border); color:var(--text-secondary); transition:all 0.3s; }
+.social-icon:hover { transform:translateY(-3px); box-shadow:0 6px 20px var(--shadow); }
+.social-icon.whatsapp:hover { background:#25D366; border-color:#25D366; color:white; }
+.social-icon.tiktok:hover { background:#000; border-color:#000; color:white; }
+.social-icon.snapchat:hover { background:#FFFC00; border-color:#FFFC00; color:#000; }
+.footer-links h4, .footer-contact h4 { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:600; color:var(--text-primary); margin-bottom:1.25rem; letter-spacing:0.05em; }
+.footer-links ul, .footer-contact ul { list-style:none; display:flex; flex-direction:column; gap:0.75rem; }
+.footer-links a { font-size:0.88rem; color:var(--text-secondary); transition:color 0.3s; letter-spacing:0.05em; }
+.footer-links a:hover { color: var(--accent-primary); }
+.footer-contact a, .contact-item { display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; color:var(--text-secondary); transition:color 0.3s; }
+.footer-contact a:hover { color: var(--accent-primary); }
+.footer-bottom { border-top:1px solid var(--border); padding:1.25rem 0; display:flex; justify-content:space-between; align-items:center; }
+.footer-bottom p { font-size:0.8rem; color:var(--text-muted); letter-spacing:0.05em; }
+@media (max-width:768px) { .footer-inner{grid-template-columns:1fr;gap:2rem} .footer-bottom{flex-direction:column;gap:0.5rem;text-align:center} }

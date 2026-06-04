@@ -4,7 +4,6 @@ import { useTheme } from '../context/ThemeContext'
 import { FiSun, FiMoon, FiMenu, FiX } from 'react-icons/fi'
 import './Navbar.css'
 
-// Hardcoded admin credentials
 const ADMIN_EMAIL = 'ricsglam@admin.com'
 const ADMIN_PASSWORD = 'Ndukaglam2018@'
 
@@ -31,9 +30,7 @@ export default function Navbar() {
     clickCountRef.current += 1
     clearTimeout(clickTimerRef.current)
     clickTimerRef.current = setTimeout(() => {
-      if (clickCountRef.current === 3) {
-        setAdminModalOpen(true)
-      }
+      if (clickCountRef.current === 3) setAdminModalOpen(true)
       clickCountRef.current = 0
     }, 500)
   }
@@ -61,26 +58,16 @@ export default function Navbar() {
     <>
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="navbar-inner container">
-          {/* Logo */}
           <div className="navbar-logo" onClick={handleLogoClick}>
             <span className="logo-text">Ric's Glam</span>
           </div>
-
-          {/* Desktop Links */}
           <ul className="navbar-links">
             {navLinks.map(link => (
               <li key={link.path}>
-                <Link
-                  to={link.path}
-                  className={location.pathname === link.path ? 'active' : ''}
-                >
-                  {link.label}
-                </Link>
+                <Link to={link.path} className={location.pathname === link.path ? 'active' : ''}>{link.label}</Link>
               </li>
             ))}
           </ul>
-
-          {/* Right Actions */}
           <div className="navbar-actions">
             <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
               {isDark ? <FiSun size={18} /> : <FiMoon size={18} />}
@@ -90,48 +77,24 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-
-        {/* Mobile Menu */}
         {menuOpen && (
           <div className="mobile-menu">
             {navLinks.map(link => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={location.pathname === link.path ? 'active' : ''}
-                onClick={() => setMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
+              <Link key={link.path} to={link.path} className={location.pathname === link.path ? 'active' : ''} onClick={() => setMenuOpen(false)}>{link.label}</Link>
             ))}
           </div>
         )}
       </nav>
 
-      {/* Admin Login Modal */}
       {adminModalOpen && (
         <div className="modal-overlay" onClick={() => setAdminModalOpen(false)}>
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setAdminModalOpen(false)}>
-              <FiX size={20} />
-            </button>
+            <button className="modal-close" onClick={() => setAdminModalOpen(false)}><FiX size={20} /></button>
             <h3>Admin Access</h3>
             <p>Enter your credentials to continue</p>
             <form onSubmit={handleAdminLogin}>
-              <input
-                type="email"
-                placeholder="Email"
-                value={adminEmail}
-                onChange={e => setAdminEmail(e.target.value)}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={adminPassword}
-                onChange={e => setAdminPassword(e.target.value)}
-                required
-              />
+              <input type="email" placeholder="Email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} required />
+              <input type="password" placeholder="Password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} required />
               {adminError && <span className="error">{adminError}</span>}
               <button type="submit" className="btn-primary">Login</button>
             </form>

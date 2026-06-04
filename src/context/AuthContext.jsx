@@ -12,11 +12,9 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null)
       setLoading(false)
     })
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
     })
-
     return () => subscription.unsubscribe()
   }, [])
 
@@ -30,9 +28,7 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-  }
+  const signOut = async () => { await supabase.auth.signOut() }
 
   return (
     <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
