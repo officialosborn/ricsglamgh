@@ -59,7 +59,7 @@ export default function Navbar() {
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="navbar-inner container">
           <div className="navbar-logo" onClick={handleLogoClick}>
-            <span className="logo-text">Ric's Glam</span>
+            <span className="logo-text">RICS GLAM</span>
           </div>
           <ul className="navbar-links">
             {navLinks.map(link => (
