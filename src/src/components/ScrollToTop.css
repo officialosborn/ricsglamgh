@@ -1,0 +1,3 @@
+.scroll-top{position:fixed;right:20px;bottom:24px;z-index:900;width:46px;height:46px;border-radius:50%;border:1px solid var(--gold,#c9a24b);background:var(--pink,#b97cf0);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;pointer-events:none;transform:translateY(12px);transition:.3s;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.scroll-top.visible{opacity:1;pointer-events:auto;transform:none}
+.scroll-top:hover{filter:brightness(1.1)}
